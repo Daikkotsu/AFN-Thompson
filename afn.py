@@ -7,6 +7,7 @@ class Estado:
 
         self.edo_acept = False
         self.transiciones = []
+        self.token = -1
 
     def __repr__(self):
         return f"Estado({self.id_edo})"
@@ -248,7 +249,7 @@ class AFN:
         for estado_acept in self.edos_acept:
             self.edo_ini.transiciones.append(
                 Transicion(self.EPSILON, estado_acept)
-            )
+            ) 
 
         self.registrar_resultado(
             nuevo_id,
@@ -382,3 +383,50 @@ class AFN:
 
         # Lo registramos
         AFN.afns_creados[nuevo_id] = self
+
+    def cerradura_epsilon(self, estados):
+
+        if isinstance(estados, Estado):
+            estados = {estados}
+        else:
+            estados = set(estados)
+
+        resultado = set(estados)
+        pila = list(estados)
+
+        while pila:
+            estado_actual = pila.pop()
+
+            for transicion in estado_actual.transiciones:
+
+                if transicion.simb_inf == self.EPSILON:
+                    destino = transicion.edo_dest
+
+                    if destino not in resultado:
+                        resultado.add(destino)
+                        pila.append(destino)
+
+        return resultado
+
+    def mover(self, estados, simbolo):
+
+        if isinstance(estados, Estado):
+            estados = {estados}
+        else:
+            estados = set(estados)
+
+        resultado = set()
+
+        for estado in estados:
+            for transicion in estado.transiciones:
+
+                if transicion.simb_inf != self.EPSILON:
+                    if transicion.acepta(simbolo):
+                        resultado.add(transicion.edo_dest)
+
+        return resultado
+
+    def ir_a(self, estados, simbolo):
+
+        conjunto_mover = self.mover(estados, simbolo)
+        return self.cerradura_epsilon(conjunto_mover)
