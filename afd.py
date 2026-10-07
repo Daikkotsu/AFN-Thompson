@@ -96,7 +96,8 @@ class AFD:
         alfabeto_ordenado = sorted(list(self.alfabeto))
 
         encabezados = ["Edo"] + alfabeto_ordenado + ["Token"]
-        print("\t".join(encabezados))
+        print(" | ".join([h.ljust(3) for h in encabezados]))
+        print("-" * (6 * len(encabezados)))
 
         for estado in self.estados:
             fila = [str(estado.id_edo)]
@@ -109,4 +110,4 @@ class AFD:
                     fila.append("-1")
 
             fila.append(str(estado.token))
-            print("\t".join(fila))
+            print(" | ".join([item.ljust(3) for item in fila]))
