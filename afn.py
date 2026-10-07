@@ -430,3 +430,42 @@ class AFN:
 
         conjunto_mover = self.mover(estados, simbolo)
         return self.cerradura_epsilon(conjunto_mover)
+
+    def asignar_token(self, token):
+
+        for estado in self.edos_acept:
+            estado.token = token
+        return self
+
+    @staticmethod
+    def union_especial_lexica(nuevo_id, ids_afns):
+
+        if len(ids_afns) < 2:
+            raise ValueError(
+                "Se necesitan al menos dos AFN para la union especial."
+            )
+
+        f = AFN(nuevo_id)
+
+        nuevo_ini = Estado()
+        f.edo_ini = nuevo_ini
+        f.edos_afn.add(nuevo_ini)
+
+        for id_afn in ids_afns:
+            afn_actual = AFN.obtener_afn(id_afn)
+            if not afn_actual:
+                raise ValueError(
+                    f"No se encontró un AFN con el ID `{id_afn}`."
+                )
+
+            nuevo_ini.transiciones.append(
+                Transicion(AFN.EPSILON, afn_actual.edo_ini)
+            )
+
+            f.edos_afn.update(afn_actual.edos_afn)
+
+            f.edos_acept.update(afn_actual.edos_acept)
+            f.alfabeto.update(afn_actual.alfabeto)
+
+        f.registrar_resultado(nuevo_id, ids_afns)
+        return f
