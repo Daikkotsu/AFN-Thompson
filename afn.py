@@ -467,5 +467,5 @@ class AFN:
             f.edos_acept.update(afn_actual.edos_acept)
             f.alfabeto.update(afn_actual.alfabeto)
 
-        f.registrar_resultado(nuevo_id, ids_afns)
+        f.registrar_resultado(nuevo_id)
         return f
