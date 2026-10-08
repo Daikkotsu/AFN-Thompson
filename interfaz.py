@@ -87,6 +87,16 @@ class InterfazThompson:
 
         boton_ver.pack(pady=5)
 
+        boton_modulo_lexico = tk.Button(
+            self.ventana,
+            text="Analizador Léxico (AFN -> AFD)",
+            width=30,
+            command=self.ventana_modulo_lexico,
+            bg="lightblue"
+        )
+
+        boton_modulo_lexico.pack(pady=15)
+
     def ventana_crear_basico(self):
 
         ventana = tk.Toplevel(self.ventana)
@@ -952,6 +962,112 @@ class InterfazThompson:
 
         mostrar_afn()
 
+    def ventana_modulo_lexico(self):
+        ids = AFN.obtener_ids()
+        if not ids:
+            messagebox.showwarning("Sin AFN", "Primero debes crear AFNs básicos (Ej: + , - , 0-9).")
+            return
+
+        ventana = tk.Toplevel(self.ventana)
+        ventana.title("Módulo Analizador Léxico")
+        ventana.geometry("500x650")
+
+        tk.Label(ventana, text="1. Selecciona los AFN para el Analizador:", font=("Arial", 11, "bold")).pack(pady=10)
+
+        frame_lista = tk.Frame(ventana)
+        frame_lista.pack()
+        
+        # Lista múltiple para seleccionar varios AFNs
+        lista_afns = tk.Listbox(frame_lista, selectmode="multiple", width=30, height=6)
+        lista_afns.pack(side="left")
+        
+        scroll = tk.Scrollbar(frame_lista, command=lista_afns.yview)
+        scroll.pack(side="right", fill="y")
+        lista_afns.config(yscrollcommand=scroll.set)
+
+        for id_afn in ids:
+            lista_afns.insert(tk.END, id_afn)
+
+        tk.Label(ventana, text="ID para guardar este Analizador Léxico:").pack(pady=5)
+        entrada_id_afd = tk.Entry(ventana, width=28)
+        entrada_id_afd.pack(pady=5)
+
+        # Variable para saber cuál analizamos actualmente
+        self.afd_actual = None
+
+        def generar_afd_lexico():
+            indices = lista_afns.curselection()
+            seleccionados = [lista_afns.get(i) for i in indices]
+            id_nuevo_afd = entrada_id_afd.get().strip()
+            
+            if len(seleccionados) < 2:
+                messagebox.showerror("Error", "Debes seleccionar al menos 2 AFNs para unirlos.")
+                return
+            if not id_nuevo_afd:
+                messagebox.showerror("Error", "Debes ingresar un ID para guardar el analizador.")
+                return
+                
+            try:
+                # Les asignamos un token dinámico (10, 20, 30...) para la demo
+                for i, id_sel in enumerate(seleccionados):
+                    AFN.obtener_afn(id_sel).asignar_token((i + 1) * 10)
+                    
+                id_afn_combinado = f"AFN_{id_nuevo_afd}"
+                if id_afn_combinado in AFN.afns_creados:
+                    del AFN.afns_creados[id_afn_combinado]
+                    
+                afn_lex = AFN.union_especial_lexica(id_afn_combinado, seleccionados)
+                
+                from afd import AFD
+                self.afd_actual = AFD(id_nuevo_afd).convertir_afn(afn_lex)
+                messagebox.showinfo("Éxito", f"Analizador '{id_nuevo_afd}' guardado en memoria.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Fallo generando AFD: {str(e)}")
+
+        tk.Button(ventana, text="Generar AFD Léxico", command=generar_afd_lexico).pack(pady=10)
+
+        tk.Label(ventana, text="2. Escribe la cadena a analizar:", font=("Arial", 11, "bold")).pack(pady=10)
+        entrada_cadena = tk.Entry(ventana, width=40, font=("Arial", 12))
+        entrada_cadena.pack(pady=5)
+
+        # Tabla de resultados léxicos
+        columnas = ("token", "lexema")
+        tabla = ttk.Treeview(ventana, columns=columnas, show="headings", height=10)
+        tabla.heading("token", text="Token")
+        tabla.heading("lexema", text="Lexema")
+        tabla.column("token", width=100, anchor="center")
+        tabla.column("lexema", width=200, anchor="center")
+        tabla.pack(pady=10)
+
+        def analizar_cadena():
+            if getattr(self, "afd_actual", None) is None:
+                messagebox.showerror("Error", "Primero debes generar el AFD Léxico.")
+                return
+                
+            cadena = entrada_cadena.get()
+            if not cadena:
+                return
+
+            # Limpiar tabla
+            for fila in tabla.get_children():
+                tabla.delete(fila)
+
+            from analiz_lexico import AnalizLexico
+            analizador = AnalizLexico(self.afd_actual, cadena)
+
+            while True:
+                token = analizador.yylex()
+                if token == AnalizLexico.FIN:
+                    break
+                
+                tabla.insert("", tk.END, values=(token, analizador.estado.lexema))
+                
+                if token == AnalizLexico.ERROR:
+                    messagebox.showwarning("Error Léxico", f"Símbolo no reconocido: '{analizador.estado.lexema}'")
+                    break
+
+        tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5)
+        
     def dibujar_afn(self, canvas, afn):
 
         canvas.delete("all")
