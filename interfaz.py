@@ -988,12 +988,9 @@ class InterfazThompson:
         for id_afn in ids:
             lista_afns.insert(tk.END, id_afn)
 
-        tk.Label(ventana, text="ID para guardar este Analizador Léxico:").pack(pady=5)
+        tk.Label(ventana, text="ID para guardar/usar este Analizador Léxico:").pack(pady=5)
         entrada_id_afd = tk.Entry(ventana, width=28)
         entrada_id_afd.pack(pady=5)
-
-        # Variable para saber cuál analizamos actualmente
-        self.afd_actual = None
 
         def generar_afd_lexico():
             indices = lista_afns.curselection()
@@ -1008,7 +1005,6 @@ class InterfazThompson:
                 return
                 
             try:
-                # Les asignamos un token dinámico (10, 20, 30...) para la demo
                 for i, id_sel in enumerate(seleccionados):
                     AFN.obtener_afn(id_sel).asignar_token((i + 1) * 10)
                     
@@ -1019,7 +1015,7 @@ class InterfazThompson:
                 afn_lex = AFN.union_especial_lexica(id_afn_combinado, seleccionados)
                 
                 from afd import AFD
-                self.afd_actual = AFD(id_nuevo_afd).convertir_afn(afn_lex)
+                AFD(id_nuevo_afd).convertir_afn(afn_lex)
                 messagebox.showinfo("Éxito", f"Analizador '{id_nuevo_afd}' guardado en memoria.")
             except Exception as e:
                 messagebox.showerror("Error", f"Fallo generando AFD: {str(e)}")
@@ -1040,20 +1036,28 @@ class InterfazThompson:
         tabla.pack(pady=10)
 
         def analizar_cadena():
-            if getattr(self, "afd_actual", None) is None:
-                messagebox.showerror("Error", "Primero debes generar el AFD Léxico.")
+            # NUEVO: Buscamos el AFD por el ID directamente en la memoria global
+            id_afd = entrada_id_afd.get().strip()
+            if not id_afd:
+                messagebox.showerror("Error", "Escribe el ID del Analizador Léxico a usar.")
+                return
+                
+            from afd import AFD
+            afd_a_usar = AFD.obtener_afd(id_afd)
+            
+            if not afd_a_usar:
+                messagebox.showerror("Error", f"No se encontró el analizador '{id_afd}'. ¡Genéralo primero!")
                 return
                 
             cadena = entrada_cadena.get()
             if not cadena:
                 return
 
-            # Limpiar tabla
             for fila in tabla.get_children():
                 tabla.delete(fila)
 
             from analiz_lexico import AnalizLexico
-            analizador = AnalizLexico(self.afd_actual, cadena)
+            analizador = AnalizLexico(afd_a_usar, cadena)
 
             while True:
                 token = analizador.yylex()
@@ -1066,7 +1070,7 @@ class InterfazThompson:
                     messagebox.showwarning("Error Léxico", f"Símbolo no reconocido: '{analizador.estado.lexema}'")
                     break
 
-        tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5)
+        tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5) 
         
     def dibujar_afn(self, canvas, afn):
 
