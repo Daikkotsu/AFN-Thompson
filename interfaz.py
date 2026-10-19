@@ -1076,7 +1076,7 @@ class InterfazThompson:
 
                 if token == AnalizLexico.ERROR:
                     messagebox.showwarning("Error Léxico", f"Símbolo no reconocido: '{analizador.estado.lexema}'")
-                    break
+                    
 
         tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5)
 
