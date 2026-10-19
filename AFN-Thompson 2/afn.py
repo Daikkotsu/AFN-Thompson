@@ -1,0 +1,479 @@
+class Estado:
+    contador_edos = 0
+
+    def __init__(self):
+        self.id_edo = Estado.contador_edos
+        Estado.contador_edos += 1
+
+        self.edo_acept = False
+        self.transiciones = []
+        self.token = -1
+
+    def __repr__(self):
+        return f"Estado({self.id_edo})"
+
+class Transicion:
+    def __init__(self, simb_inf, edo_dest, simb_sup=None):
+        self.simb_inf = simb_inf
+
+
+
+        if simb_sup is None:
+            self.simb_sup = simb_inf
+        else:
+            self.simb_sup = simb_sup
+
+        self.edo_dest = edo_dest
+
+    def acepta(self, simbolo):
+        return self.simb_inf <= simbolo <= self.simb_sup
+
+    def __repr__(self):
+        if self.simb_inf == self.simb_sup:
+            simbolo = self.simb_inf
+        else:
+            simbolo = f"{self.simb_inf}-{self.simb_sup}"
+
+        return f"--{simbolo}--> Estado({self.edo_dest.id_edo})"
+
+
+
+AFNS_CREADOS = {}
+
+
+class AFN:
+    EPSILON = "ε"
+
+    def __init__(self):
+        self.alfabeto = set()
+        self.edo_ini = None
+        self.edos_acept = set()
+        self.edos_afn = set()
+
+    @staticmethod
+    def obtener_afn(id_afn):
+        return AFNS_CREADOS.get(id_afn)
+
+    @staticmethod
+    def obtener_ids():
+        return list(AFNS_CREADOS.keys())
+
+    def crear_basico(self, simb1, simb2=None, id_afn=None):
+
+
+        if simb2 is None:
+            simb2 = simb1
+
+
+        if len(simb1) != 1 or len(simb2) != 1:
+            raise ValueError(
+                "Los simbolos deben ser de un solo caracter."
+            )
+
+        if ord(simb1) > ord(simb2):
+            raise ValueError(
+                "El simbolo inferior no puede ser mayor al superior."
+            )
+
+        if id_afn is not None and id_afn in AFNS_CREADOS:
+            raise ValueError(
+                f"Ya existe un AFN con el ID `{id_afn}`."
+            )
+
+
+        f = AFN()
+
+
+        e1 = Estado()
+        e2 = Estado()
+
+
+        t = Transicion(simb1, e2, simb2)
+
+
+        e1.transiciones.append(t)
+
+
+        e2.edo_acept = True
+
+
+        f.edo_ini = e1
+        f.edos_acept.add(e2)
+
+        f.edos_afn.add(e1)
+        f.edos_afn.add(e2)
+
+
+
+
+        for codigo in range(ord(simb1), ord(simb2) + 1):
+            f.alfabeto.add(chr(codigo))
+
+        if id_afn is not None:
+            AFNS_CREADOS[id_afn] = f
+
+        return f
+
+    def concatenar(self, f2, nuevo_id):
+        id1 = self.obtener_id_objeto(self)
+        id2 = self.obtener_id_objeto(f2)
+        self.validar_id_resultado(nuevo_id, {self, f2})
+
+
+        for estado_acept in self.edos_acept:
+
+
+            estado_acept.edo_acept = False
+
+
+            for transicion in f2.edo_ini.transiciones:
+                estado_acept.transiciones.append(transicion)
+
+
+        f2.edos_afn.discard(f2.edo_ini)
+
+
+        self.edos_afn.update(f2.edos_afn)
+        self.edos_acept = f2.edos_acept
+        self.alfabeto.update(f2.alfabeto)
+
+        self.registrar_resultado(
+            nuevo_id,
+            [id1, id2]
+        )
+
+        return self
+
+    def unir(self, f2, nuevo_id):
+
+        id1 = self.obtener_id_objeto(self)
+        id2 = self.obtener_id_objeto(f2)
+        self.validar_id_resultado(nuevo_id, {self, f2})
+
+
+        nuevo_ini = Estado()
+        nuevo_fin = Estado()
+
+
+        nuevo_fin.edo_acept = True
+
+
+
+        nuevo_ini.transiciones.append(
+            Transicion(self.EPSILON, self.edo_ini)
+        )
+
+        nuevo_ini.transiciones.append(
+            Transicion(self.EPSILON, f2.edo_ini)
+        )
+
+
+        for estado in self.edos_acept:
+            estado.edo_acept = False
+            estado.transiciones.append(
+                Transicion(self.EPSILON, nuevo_fin)
+            )
+
+        for estado in f2.edos_acept:
+            estado.edo_acept = False
+            estado.transiciones.append(
+                Transicion(self.EPSILON, nuevo_fin)
+            )
+
+
+        self.edos_afn.update(f2.edos_afn)
+
+        self.edos_afn.add(nuevo_ini)
+        self.edos_afn.add(nuevo_fin)
+
+
+        self.edo_ini = nuevo_ini
+        self.edos_acept = {nuevo_fin}
+
+
+        self.alfabeto.update(f2.alfabeto)
+
+        self.registrar_resultado(
+            nuevo_id,
+            [id1, id2]
+        )
+
+        return self
+
+    def cerradura_pos(self, nuevo_id=None):
+
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
+
+
+        nuevo_ini = Estado()
+        nuevo_fin = Estado()
+
+        nuevo_fin.edo_acept = True
+
+        nuevo_ini.transiciones.append(
+            Transicion(self.EPSILON, self.edo_ini)
+        )
+
+
+
+        for estado in self.edos_acept:
+            estado.edo_acept = False
+
+            estado.transiciones.append(
+                Transicion(self.EPSILON, self.edo_ini)
+            )
+
+            estado.transiciones.append(
+                Transicion(self.EPSILON, nuevo_fin)
+            )
+
+        self.edos_afn.add(nuevo_ini)
+        self.edos_afn.add(nuevo_fin)
+
+        self.edo_ini = nuevo_ini
+        self.edos_acept = {nuevo_fin}
+
+        self.registrar_resultado(
+            nuevo_id,
+            [id_anterior]
+        )
+
+        return self
+
+    def cerradura_kleene(self, nuevo_id):
+
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
+
+
+        self.cerradura_pos(nuevo_id)
+
+
+
+
+        for estado_acept in self.edos_acept:
+            self.edo_ini.transiciones.append(
+                Transicion(self.EPSILON, estado_acept)
+            )
+
+        self.registrar_resultado(
+            nuevo_id,
+            [id_anterior]
+        )
+
+        return self
+
+    def opcional(self, nuevo_id):
+
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
+
+
+        nuevo_ini = Estado()
+        nuevo_fin = Estado()
+
+        nuevo_fin.edo_acept = True
+
+
+        nuevo_ini.transiciones.append(
+            Transicion(self.EPSILON, self.edo_ini)
+        )
+
+
+        nuevo_ini.transiciones.append(
+            Transicion(self.EPSILON, nuevo_fin)
+        )
+
+        for estado in self.edos_acept:
+            estado.edo_acept = False
+
+            estado.transiciones.append(
+                Transicion(self.EPSILON, nuevo_fin)
+            )
+
+        self.edos_afn.add(nuevo_ini)
+        self.edos_afn.add(nuevo_fin)
+
+        self.edo_ini = nuevo_ini
+        self.edos_acept = {nuevo_fin}
+
+        self.registrar_resultado(
+            nuevo_id,
+            [id_anterior]
+        )
+
+        return self
+
+    def obtener_transiciones(self):
+        resultado = []
+
+        for estado in sorted(self.edos_afn, key=lambda e: e.id_edo):
+
+            for transicion in estado.transiciones:
+
+
+                if transicion.simb_inf == self.EPSILON:
+                    simbolo = self.EPSILON
+
+                elif transicion.simb_inf == transicion.simb_sup:
+                    simbolo = transicion.simb_inf
+
+                else:
+                    simbolo = f"{transicion.simb_inf}-{transicion.simb_sup}"
+
+                resultado.append(
+                    (
+                        estado.id_edo,
+                        simbolo,
+                        transicion.edo_dest.id_edo
+                    )
+                )
+
+        return resultado
+
+    def ver_afn(self):
+
+        print("\n            AFN")
+
+        print("Estado inicial:", self.edo_ini.id_edo)
+
+        print(
+            "Estados:",
+            [e.id_edo for e in sorted(
+                self.edos_afn,
+                key=lambda e: e.id_edo
+            )]
+        )
+
+        print(
+            "Estados de aceptacion:",
+            [e.id_edo for e in sorted(
+                self.edos_acept,
+                key=lambda e: e.id_edo
+            )]
+        )
+
+        print("Alfabeto:", sorted(self.alfabeto))
+
+        print("\nTabla de transiciones")
+        print("----------------------")
+        print("Edo\tSimb\tEdo")
+
+        for origen, simbolo, destino in self.obtener_transiciones():
+            print(f"{origen}\t{simbolo}\t{destino}")
+
+        print("----------------------")
+
+    @staticmethod
+    def obtener_id_objeto(afn):
+        for identificador, objeto in AFNS_CREADOS.items():
+            if objeto is afn:
+                return identificador
+        return None
+
+    @staticmethod
+    def validar_id_resultado(nuevo_id, participantes):
+        if not nuevo_id:
+            raise ValueError("El AFN resultante debe tener un ID.")
+        existente = AFNS_CREADOS.get(nuevo_id)
+        if existente is not None and existente not in participantes:
+            raise ValueError(f"Ya existe un AFN con el ID `{nuevo_id}`.")
+
+    def registrar_resultado(self, nuevo_id, ids_eliminar=None):
+        self.validar_id_resultado(nuevo_id, {self})
+        for identificador in (ids_eliminar or []):
+            if identificador is not None:
+                AFNS_CREADOS.pop(identificador, None)
+
+        for identificador, afn in list(AFNS_CREADOS.items()):
+            if afn is self:
+                del AFNS_CREADOS[identificador]
+        AFNS_CREADOS[nuevo_id] = self
+
+    def cerradura_epsilon(self, estados):
+
+        if isinstance(estados, Estado):
+            estados = {estados}
+        else:
+            estados = set(estados)
+
+        resultado = set(estados)
+        pila = list(estados)
+
+        while pila:
+            estado_actual = pila.pop()
+
+            for transicion in estado_actual.transiciones:
+
+                if transicion.simb_inf == self.EPSILON:
+                    destino = transicion.edo_dest
+
+                    if destino not in resultado:
+                        resultado.add(destino)
+                        pila.append(destino)
+
+        return resultado
+
+    def mover(self, estados, simbolo):
+
+        if isinstance(estados, Estado):
+            estados = {estados}
+        else:
+            estados = set(estados)
+
+        resultado = set()
+
+        for estado in estados:
+            for transicion in estado.transiciones:
+
+                if transicion.simb_inf != self.EPSILON:
+                    if transicion.acepta(simbolo):
+                        resultado.add(transicion.edo_dest)
+
+        return resultado
+
+    def ir_a(self, estados, simbolo):
+
+        conjunto_mover = self.mover(estados, simbolo)
+        return self.cerradura_epsilon(conjunto_mover)
+
+    def asignar_token(self, token):
+
+        for estado in self.edos_acept:
+            estado.token = token
+        return self
+
+    @staticmethod
+    def union_especial_lexica(nuevo_id, ids_afns):
+
+        if len(ids_afns) < 2:
+            raise ValueError(
+                "Se necesitan al menos dos AFN para la union especial."
+            )
+
+        AFN.validar_id_resultado(nuevo_id, set())
+        f = AFN()
+
+        nuevo_ini = Estado()
+        f.edo_ini = nuevo_ini
+        f.edos_afn.add(nuevo_ini)
+
+        for id_afn in ids_afns:
+            afn_actual = AFN.obtener_afn(id_afn)
+            if not afn_actual:
+                raise ValueError(
+                    f"No se encontró un AFN con el ID `{id_afn}`."
+                )
+
+            nuevo_ini.transiciones.append(
+                Transicion(AFN.EPSILON, afn_actual.edo_ini)
+            )
+
+            f.edos_afn.update(afn_actual.edos_afn)
+
+            f.edos_acept.update(afn_actual.edos_acept)
+            f.alfabeto.update(afn_actual.alfabeto)
+
+        f.registrar_resultado(nuevo_id)
+        return f
