@@ -55,8 +55,7 @@ class AFN:
         return list(AFN.afns_creados.keys())
 
     def crear_basico(self, simb1, simb2=None, id_afn=None):
-        # Si no se manda simb2, entonces se creara
-        # Un AFN de un solo simbolo
+
         if simb2 is None:
             simb2 = simb1
 
@@ -86,22 +85,16 @@ class AFN:
         # Aqui es donde se crea la transicion
         t = Transicion(simb1, e2, simb2)
 
-        # La transicion sale del estado 1 e1
         e1.transiciones.append(t)
 
-        # El 2 sera estado de aceptacion e2
         e2.edo_acept = True
 
-        # Aqui se configura el AFN
         f.edo_ini = e1
         f.edos_acept.add(e2)
 
         f.edos_afn.add(e1)
         f.edos_afn.add(e2)
 
-        # Por ultimo agregamos los simbolos del alfabeto
-        #La funcion ord() nos devuelve el valor numerico del caracter,
-        # y la funcion chr() nos devuelve el caracter a partir de su valor numerico
         for codigo in range(ord(simb1), ord(simb2) + 1):
             f.alfabeto.add(chr(codigo))
 
@@ -114,7 +107,6 @@ class AFN:
         id1 = self.id_afn
         id2 = f2.id_afn
 
-        # Cada estado del primer AFN
         for estado_acept in self.edos_acept:
 
             # Deajra de ser estado de aceptacion
@@ -151,8 +143,6 @@ class AFN:
         #Ahora el nuevo fin sera de aceptacion
         nuevo_fin.edo_acept = True
 
-        #Ponemos las transiciones del nuevo estado inicial 
-        # a los estados iniciales de ambos AFN
         nuevo_ini.transiciones.append(
             Transicion(self.EPSILON, self.edo_ini)
         )
@@ -161,7 +151,6 @@ class AFN:
             Transicion(self.EPSILON, f2.edo_ini)
         )
 
-        #Eliminamos los anteriores estados de aceptacion
         for estado in self.edos_acept:
             estado.edo_acept = False
             estado.transiciones.append(

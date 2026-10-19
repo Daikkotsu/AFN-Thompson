@@ -11,7 +11,7 @@ class EstadoAFD:
         return f"EstadoAFD({self.id_edo})"
 
 class AFD:
-    afds_creados = {}  # Registro global de AFDs generados
+    afds_creados = {}  
 
     def __init__(self, id_afd=None):
         self.id_afd = id_afd

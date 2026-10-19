@@ -65,7 +65,6 @@ class AnalizLexico:
 
         estado_afd_actual = self.afd.edo_ini
         
-        # Validar si el S0 ya es de aceptación desde el inicio
         if estado_afd_actual.token != -1:
             self.estado.PasoPorEdoAcep = True
             self.estado.token = estado_afd_actual.token
@@ -90,7 +89,6 @@ class AnalizLexico:
             self.estado.IndCaracActual = self.estado.IndFinLexema
             self.estado.lexema = self.cadena[self.estado.IndIniLexema : self.estado.IndFinLexema]
             
-            # PARCHE ANTI-CICLOS: Si el lexema está vacío, fuerza a avanzar 1 char
             if len(self.estado.lexema) == 0:
                 self.estado.IndCaracActual += 1
                 self.estado.lexema = self.cadena[self.estado.IndIniLexema : self.estado.IndCaracActual]

@@ -1045,7 +1045,6 @@ class InterfazThompson:
         tabla.pack(pady=10)
 
         def analizar_cadena():
-            # NUEVO: Buscamos el AFD por el ID directamente en la memoria global
             id_afd = entrada_id_afd.get().strip()
             if not id_afd:
                 messagebox.showerror("Error", "Escribe el ID del Analizador Léxico a usar.")
@@ -1172,11 +1171,10 @@ class InterfazThompson:
                     y
                 )
 
-        # Dibujamos las transiciones
+
 
         transiciones = afn.obtener_transiciones()
 
-        # Pares de estados que tienen transición
         pares = {
             (origen, destino)
             for origen, simbolo, destino in transiciones
@@ -1195,7 +1193,6 @@ class InterfazThompson:
             nivel_origen = niveles[origen]
             nivel_destino = niveles[destino]
 
-            # Transicion al mismo estado
 
             if origen == destino:
 
@@ -1225,8 +1222,6 @@ class InterfazThompson:
                 )
 
                 continue
-
-            # El salto del inicial al final va por debajo del AFN
 
             if (
                 origen == afn.edo_ini.id_edo
@@ -1277,8 +1272,6 @@ class InterfazThompson:
                 )
 
                 continue
-
-            # Las transiciones hacia atras van por arriba
 
             if nivel_destino < nivel_origen:
 
@@ -1354,7 +1347,6 @@ class InterfazThompson:
             ux = dx / distancia
             uy = dy / distancia
 
-            # Evitamos que la flecha entre hasta el centro del círculo
             inicio_x = (
                 x1 + ux * radio_estado
             )
@@ -1371,7 +1363,6 @@ class InterfazThompson:
                 y2 - uy * radio_estado
             )
 
-            # Curvamos la flecha si hay transicion en ambos sentidos
 
             if (destino, origen) in pares:
 
@@ -1443,7 +1434,6 @@ class InterfazThompson:
                     font=("Arial", 11, "bold")
                 )
 
-        # Dibujamos los estados despues de las transiciones
 
         for estado in estados:
 
@@ -1484,7 +1474,6 @@ class InterfazThompson:
                 font=("Arial", 11, "bold")
             )
 
-        # Flecha que indica el estado inicial
 
         inicial = afn.edo_ini
 
@@ -1512,7 +1501,6 @@ class InterfazThompson:
 
         transiciones = afn.obtener_transiciones()
 
-        # Empezamos ordenando por ID
         ordenados = {}
 
         for nivel, estados in estados_por_nivel.items():
@@ -1521,7 +1509,6 @@ class InterfazThompson:
                 key=lambda e: e.id_edo
             )
 
-        # Recorremos las columnas de izquierda a derecha
         for nivel in sorted(ordenados.keys()):
 
             if nivel == 0:
@@ -1532,7 +1519,6 @@ class InterfazThompson:
             if nivel_anterior not in ordenados:
                 continue
 
-            # Posición vertical lógica de los estados anteriores
             posiciones_anteriores = {
                 estado.id_edo: i
                 for i, estado in enumerate(
@@ -1549,7 +1535,6 @@ class InterfazThompson:
                     if destino != estado.id_edo:
                         continue
 
-                    # Solo nos interesan conexiones provenientes del nivel anterior
                     if (
                         origen in niveles
                         and niveles[origen] == nivel_anterior
@@ -1558,12 +1543,9 @@ class InterfazThompson:
                         padres.append(
                             posiciones_anteriores[origen]
                         )
-
-                # Si nadie del nivel anterior llega aquí, lo dejamos al final
                 if not padres:
                     return float("inf")
 
-                # Promedio de las posiciones de sus padres
                 return sum(padres) / len(padres)
 
             ordenados[nivel] = sorted(

@@ -80,7 +80,6 @@ class EvaluadorExpr:
                     return True, v, post
             return False, v, post
             
-        # Si no es * o /, deshacemos el token (epsilon)
         self.lexic.undo_token()
         return True, v, post
 

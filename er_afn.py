@@ -2,7 +2,7 @@ from afn import AFN
 from analiz_lexico import AnalizLexico
 
 class ER_AFN:
-    contador_tmp = 0  # Contador estático para generar IDs únicos
+    contador_tmp = 0 
 
     def __init__(self, analizador_lexico):
         self.lexic = analizador_lexico
