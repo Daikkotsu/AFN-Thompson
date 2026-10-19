@@ -57,6 +57,7 @@ class AFN:
     @staticmethod
     def obtener_ids():
         return list(AFNS_CREADOS.keys())
+    
 
     def crear_basico(self, simb1, simb2=None, id_afn=None):
 
