@@ -16,6 +16,8 @@ class Transicion:
     def __init__(self, simb_inf, edo_dest, simb_sup=None):
         self.simb_inf = simb_inf
 
+
+
         if simb_sup is None:
             self.simb_sup = simb_inf
         else:
@@ -34,13 +36,15 @@ class Transicion:
 
         return f"--{simbolo}--> Estado({self.edo_dest.id_edo})"
 
+
+
+AFNS_CREADOS = {}
+
+
 class AFN:
     EPSILON = "ε"
 
-    afns_creados = {}
-
-    def __init__(self, id_afn=None):
-        self.id_afn = id_afn
+    def __init__(self):
         self.alfabeto = set()
         self.edo_ini = None
         self.edos_acept = set()
@@ -48,18 +52,19 @@ class AFN:
 
     @staticmethod
     def obtener_afn(id_afn):
-        return AFN.afns_creados.get(id_afn)
+        return AFNS_CREADOS.get(id_afn)
 
     @staticmethod
     def obtener_ids():
-        return list(AFN.afns_creados.keys())
+        return list(AFNS_CREADOS.keys())
 
     def crear_basico(self, simb1, simb2=None, id_afn=None):
+
 
         if simb2 is None:
             simb2 = simb1
 
-        # Validaciones 
+
         if len(simb1) != 1 or len(simb2) != 1:
             raise ValueError(
                 "Los simbolos deben ser de un solo caracter."
@@ -70,24 +75,27 @@ class AFN:
                 "El simbolo inferior no puede ser mayor al superior."
             )
 
-        if id_afn is not None and id_afn in AFN.afns_creados:
+        if id_afn is not None and id_afn in AFNS_CREADOS:
             raise ValueError(
                 f"Ya existe un AFN con el ID `{id_afn}`."
             )
 
-        # Aqui se creara el AFN nuevo
-        f = AFN(id_afn)
 
-        # Aquie creamos sus dos estados
+        f = AFN()
+
+
         e1 = Estado()
         e2 = Estado()
 
-        # Aqui es donde se crea la transicion
+
         t = Transicion(simb1, e2, simb2)
+
 
         e1.transiciones.append(t)
 
+
         e2.edo_acept = True
+
 
         f.edo_ini = e1
         f.edos_acept.add(e2)
@@ -95,31 +103,36 @@ class AFN:
         f.edos_afn.add(e1)
         f.edos_afn.add(e2)
 
+
+
+
         for codigo in range(ord(simb1), ord(simb2) + 1):
             f.alfabeto.add(chr(codigo))
 
         if id_afn is not None:
-            AFN.afns_creados[id_afn] = f
+            AFNS_CREADOS[id_afn] = f
 
         return f
 
     def concatenar(self, f2, nuevo_id):
-        id1 = self.id_afn
-        id2 = f2.id_afn
+        id1 = self.obtener_id_objeto(self)
+        id2 = self.obtener_id_objeto(f2)
+        self.validar_id_resultado(nuevo_id, {self, f2})
+
 
         for estado_acept in self.edos_acept:
 
-            # Deajra de ser estado de aceptacion
+
             estado_acept.edo_acept = False
 
-            # Luego se copian las transiciones del estado ini del f2
+
             for transicion in f2.edo_ini.transiciones:
                 estado_acept.transiciones.append(transicion)
 
-        # Se elimina el estado inicial de f2
+
         f2.edos_afn.discard(f2.edo_ini)
 
-        # Y terminamos de juntar los estados de f2 al primer AFN
+
         self.edos_afn.update(f2.edos_afn)
         self.edos_acept = f2.edos_acept
         self.alfabeto.update(f2.alfabeto)
@@ -133,15 +146,18 @@ class AFN:
 
     def unir(self, f2, nuevo_id):
 
-        id1 = self.id_afn
-        id2 = f2.id_afn
+        id1 = self.obtener_id_objeto(self)
+        id2 = self.obtener_id_objeto(f2)
+        self.validar_id_resultado(nuevo_id, {self, f2})
 
-        # Aqui se crean nuevos estados, tanto final como inicial
+
         nuevo_ini = Estado()
         nuevo_fin = Estado()
 
-        #Ahora el nuevo fin sera de aceptacion
+
         nuevo_fin.edo_acept = True
+
+
 
         nuevo_ini.transiciones.append(
             Transicion(self.EPSILON, self.edo_ini)
@@ -150,6 +166,7 @@ class AFN:
         nuevo_ini.transiciones.append(
             Transicion(self.EPSILON, f2.edo_ini)
         )
+
 
         for estado in self.edos_acept:
             estado.edo_acept = False
@@ -163,17 +180,17 @@ class AFN:
                 Transicion(self.EPSILON, nuevo_fin)
             )
 
-        # Unimos todos los estados ahora si
+
         self.edos_afn.update(f2.edos_afn)
 
         self.edos_afn.add(nuevo_ini)
         self.edos_afn.add(nuevo_fin)
 
-        # Actualizamos estado inicial y tambien el de aceptacion
+
         self.edo_ini = nuevo_ini
         self.edos_acept = {nuevo_fin}
 
-        # Tambien se actualiza el alfabeto
+
         self.alfabeto.update(f2.alfabeto)
 
         self.registrar_resultado(
@@ -185,9 +202,10 @@ class AFN:
 
     def cerradura_pos(self, nuevo_id=None):
 
-        id_anterior = self.id_afn
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
 
-        # Aqui vamos a crear los nuevos estados para la cerradura
+
         nuevo_ini = Estado()
         nuevo_fin = Estado()
 
@@ -197,8 +215,8 @@ class AFN:
             Transicion(self.EPSILON, self.edo_ini)
         )
 
-        # Volvemos a hacer lo de reemplazar estados 
-        # finales e iniciales
+
+
         for estado in self.edos_acept:
             estado.edo_acept = False
 
@@ -225,18 +243,19 @@ class AFN:
 
     def cerradura_kleene(self, nuevo_id):
 
-        id_anterior = self.id_afn
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
 
-        # Aplicamos primero la cerradura positiva
+
         self.cerradura_pos(nuevo_id)
 
-        # Ahora ponemos la transicion del estado 
-        # incial al final
+
+
 
         for estado_acept in self.edos_acept:
             self.edo_ini.transiciones.append(
                 Transicion(self.EPSILON, estado_acept)
-            ) 
+            )
 
         self.registrar_resultado(
             nuevo_id,
@@ -247,20 +266,21 @@ class AFN:
 
     def opcional(self, nuevo_id):
 
-        id_anterior = self.id_afn
+        id_anterior = self.obtener_id_objeto(self)
+        self.validar_id_resultado(nuevo_id, {self})
 
-        # Nuevos estados
+
         nuevo_ini = Estado()
         nuevo_fin = Estado()
 
         nuevo_fin.edo_acept = True
 
-        # Entrar al AFN original
+
         nuevo_ini.transiciones.append(
             Transicion(self.EPSILON, self.edo_ini)
         )
 
-        # O ir directo al estado final
+
         nuevo_ini.transiciones.append(
             Transicion(self.EPSILON, nuevo_fin)
         )
@@ -292,7 +312,7 @@ class AFN:
 
             for transicion in estado.transiciones:
 
-                # Establecemos los simbolos
+
                 if transicion.simb_inf == self.EPSILON:
                     simbolo = self.EPSILON
 
@@ -345,31 +365,31 @@ class AFN:
 
         print("----------------------")
 
-    def registrar_resultado(self, nuevo_id, ids_eliminar=None):
+    @staticmethod
+    def obtener_id_objeto(afn):
+        for identificador, objeto in AFNS_CREADOS.items():
+            if objeto is afn:
+                return identificador
+        return None
 
-        if nuevo_id is None or nuevo_id == "":
+    @staticmethod
+    def validar_id_resultado(nuevo_id, participantes):
+        if not nuevo_id:
             raise ValueError("El AFN resultante debe tener un ID.")
+        existente = AFNS_CREADOS.get(nuevo_id)
+        if existente is not None and existente not in participantes:
+            raise ValueError(f"Ya existe un AFN con el ID `{nuevo_id}`.")
 
-        # Revisamos que el nuevo ID no pertenezca a otro AFN
-        if (
-            nuevo_id in AFN.afns_creados
-            and AFN.afns_creados[nuevo_id] is not self
-        ):
-            raise ValueError(
-                f"Ya existe un AFN con el ID `{nuevo_id}`."
-            )
+    def registrar_resultado(self, nuevo_id, ids_eliminar=None):
+        self.validar_id_resultado(nuevo_id, {self})
+        for identificador in (ids_eliminar or []):
+            if identificador is not None:
+                AFNS_CREADOS.pop(identificador, None)
 
-        # Eliminamos los AFN que participaron en la operacion
-        if ids_eliminar is not None:
-            for id_afn in ids_eliminar:
-                if id_afn in AFN.afns_creados:
-                    del AFN.afns_creados[id_afn]
-
-        # Cambiamos el ID del resultado
-        self.id_afn = nuevo_id
-
-        # Lo registramos
-        AFN.afns_creados[nuevo_id] = self
+        for identificador, afn in list(AFNS_CREADOS.items()):
+            if afn is self:
+                del AFNS_CREADOS[identificador]
+        AFNS_CREADOS[nuevo_id] = self
 
     def cerradura_epsilon(self, estados):
 
@@ -432,7 +452,8 @@ class AFN:
                 "Se necesitan al menos dos AFN para la union especial."
             )
 
-        f = AFN(nuevo_id)
+        AFN.validar_id_resultado(nuevo_id, set())
+        f = AFN()
 
         nuevo_ini = Estado()
         f.edo_ini = nuevo_ini
