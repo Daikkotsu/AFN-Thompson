@@ -97,6 +97,10 @@ class InterfazThompson:
 
         boton_modulo_lexico.pack(pady=15)
 
+    def insertar_tab(self, event):
+        event.widget.insert(tk.INSERT, "\t")
+        return "break"
+
     def ventana_crear_basico(self):
 
         ventana = tk.Toplevel(self.ventana)
@@ -135,6 +139,9 @@ class InterfazThompson:
 
         entrada_id = tk.Entry(ventana)
         entrada_id.pack(pady=5)
+
+        entrada_simb1.bind("<Tab>", self.insertar_tab)
+        entrada_simb2.bind("<Tab>", self.insertar_tab)
 
         def crear():
 
@@ -1026,6 +1033,7 @@ class InterfazThompson:
         entrada_cadena = tk.Entry(ventana, width=40, font=("Arial", 12))
         entrada_cadena.pack(pady=5)
 
+        entrada_cadena.bind("<Tab>", self.insertar_tab)
 
         columnas = ("token", "lexema")
         tabla = ttk.Treeview(ventana, columns=columnas, show="headings", height=10)
