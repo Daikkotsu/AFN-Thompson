@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import math
 
-from afn import AFN
+from afn import AFN, AFNS_CREADOS
 
 class InterfazThompson:
 
@@ -97,10 +97,6 @@ class InterfazThompson:
 
         boton_modulo_lexico.pack(pady=15)
 
-    def insertar_tab(self, event):
-        event.widget.insert(tk.INSERT, "\t")
-        return "break"  # Evita que Tkinter cambie el foco a la siguiente caja
-
     def ventana_crear_basico(self):
 
         ventana = tk.Toplevel(self.ventana)
@@ -139,10 +135,6 @@ class InterfazThompson:
 
         entrada_id = tk.Entry(ventana)
         entrada_id.pack(pady=5)
-
-        # Se lo aplicamos a las dos cajas de símbolos
-        entrada_simb1.bind("<Tab>", self.insertar_tab)
-        entrada_simb2.bind("<Tab>", self.insertar_tab)
 
         def crear():
 
@@ -219,7 +211,7 @@ class InterfazThompson:
 
         titulo.pack(pady=15)
 
-        # Primer AFN
+
 
         tk.Label(
             ventana,
@@ -236,7 +228,7 @@ class InterfazThompson:
         selector_afn1.pack(pady=5)
         selector_afn1.current(0)
 
-        # Segundo AFN
+
 
         tk.Label(
             ventana,
@@ -244,7 +236,7 @@ class InterfazThompson:
         ).pack()
 
         selector_afn2 = ttk.Combobox(
-            ventana, 
+            ventana,
             values=ids,
             state="readonly",
             width=25
@@ -255,10 +247,10 @@ class InterfazThompson:
         if len(ids) > 1:
             selector_afn2.current(1)
 
-        # ID del resultado
+
 
         tk.Label(
-            ventana, 
+            ventana,
             text="ID del nuevo AFN:"
         ).pack()
 
@@ -269,7 +261,7 @@ class InterfazThompson:
 
         entrada_id.pack(pady=5)
 
-        #Accion
+
 
         def unir():
 
@@ -286,7 +278,7 @@ class InterfazThompson:
 
                 if nuevo_id == "":
                     raise ValueError(
-                        "Debes introducir un ID para el AFN resultante." 
+                        "Debes introducir un ID para el AFN resultante."
                     )
 
                 afn1 = AFN.obtener_afn(id1)
@@ -428,7 +420,7 @@ class InterfazThompson:
                 )
 
         boton_concatenar = tk.Button(
-            ventana, 
+            ventana,
             text="Concatenar",
             width=15,
             command=concatenar
@@ -475,7 +467,7 @@ class InterfazThompson:
         selector_afn.pack(pady=5)
         selector_afn.current(0)
 
-        # Donde mete el nuevo ID del AFN
+
 
         tk.Label(
             ventana,
@@ -489,7 +481,7 @@ class InterfazThompson:
 
         entrada_id.pack(pady=5)
 
-        # Cerradura
+
 
         def aplicar():
 
@@ -556,7 +548,7 @@ class InterfazThompson:
 
         titulo.pack(pady=15)
 
-        # Aqui viene el selector del AFN
+
 
         tk.Label(
             ventana,
@@ -564,7 +556,7 @@ class InterfazThompson:
         ).pack()
 
         selector_afn = ttk.Combobox(
-            ventana, 
+            ventana,
             values=ids,
             state="onlyread",
             width=25
@@ -573,7 +565,7 @@ class InterfazThompson:
         selector_afn.pack(pady=5)
         selector_afn.current(0)
 
-        #Lo de siempreeee, el ID del nuevo afn
+
 
         tk.Label(
             ventana,
@@ -587,7 +579,7 @@ class InterfazThompson:
 
         entrada_id.pack(pady=5)
 
-        # Lo mismo x2, aplicar la cerradura
+
 
         def aplicar():
 
@@ -624,7 +616,7 @@ class InterfazThompson:
         boton_aplicar = tk.Button(
             ventana,
             text="Aplicar",
-            width=15,   
+            width=15,
             command=aplicar
         )
 
@@ -738,8 +730,8 @@ class InterfazThompson:
                     niveles[destino.id_edo] = nivel_actual + 1
                     cola.append(destino)
 
-        # Si llegan a haber estados no alcanzados,
-        # los pasamos al final
+
+
         max_nivel = max(niveles.values(), default=0)
 
         for estado in sorted(afn.edos_afn, key=lambda e: e.id_edo):
@@ -747,8 +739,8 @@ class InterfazThompson:
                 max_nivel += 1
                 niveles[estado.id_edo] = max_nivel
 
-        # Forzamos los estados de aceptación
-        # a aparecer en el último nivel
+
+
         niveles_no_finales = [
             nivel
             for id_edo, nivel in niveles.items()
@@ -770,7 +762,7 @@ class InterfazThompson:
 
     def ventana_ver_afn(self):
 
-        # Verificamos que existe al menos un AFN
+
         ids = AFN.obtener_ids()
 
         if not ids:
@@ -793,7 +785,7 @@ class InterfazThompson:
 
         titulo.pack(pady=15)
 
-        #Aqui implementamos un selector de AFN
+
 
         frame_selector = tk.Frame(ventana)
         frame_selector.pack(pady=10)
@@ -814,7 +806,7 @@ class InterfazThompson:
 
         selector_afn.current(0)
 
-        # Diagrama del AFN
+
 
         frame_grafo = tk.LabelFrame(
             ventana,
@@ -838,7 +830,7 @@ class InterfazThompson:
             pady=10
         )
 
-        # Mostramos la info general
+
 
         frame_info = tk.Frame(ventana)
         frame_info.pack(pady=10)
@@ -878,7 +870,7 @@ class InterfazThompson:
         tabla.heading("simbolo", text="Simbolo")
         tabla.heading("destino", text="Estado destino")
 
-        tabla.column(   
+        tabla.column(
             "origen",
             width=150,
             anchor="center"
@@ -899,7 +891,7 @@ class InterfazThompson:
         tabla.grid(row=0, column=0)
         scroll_y.grid(row=0, column=1, sticky="ns")
 
-        # Con esta funcion mostraremos el AFN
+
 
         def mostrar_afn(event=None):
 
@@ -909,7 +901,7 @@ class InterfazThompson:
 
             if afn is None:
                 return
-            
+
             self.dibujar_afn(
                 canvas,
                 afn
@@ -944,7 +936,7 @@ class InterfazThompson:
                 str(sorted(afn.alfabeto))
             )
 
-            # Este pa limpiar la tabla anterior
+
             for fila in tabla.get_children():
                 tabla.delete(fila)
 
@@ -960,7 +952,8 @@ class InterfazThompson:
                     )
                 )
 
-            # Con este selector se cambia automaticamente al cambiar de AFN
+
+
 
         selector_afn.bind(
             "<<ComboboxSelected>>",
@@ -983,11 +976,11 @@ class InterfazThompson:
 
         frame_lista = tk.Frame(ventana)
         frame_lista.pack()
-        
-        # Lista múltiple para seleccionar varios AFNs
+
+
         lista_afns = tk.Listbox(frame_lista, selectmode="multiple", width=30, height=6)
         lista_afns.pack(side="left")
-        
+
         scroll = tk.Scrollbar(frame_lista, command=lista_afns.yview)
         scroll.pack(side="right", fill="y")
         lista_afns.config(yscrollcommand=scroll.set)
@@ -1003,24 +996,24 @@ class InterfazThompson:
             indices = lista_afns.curselection()
             seleccionados = [lista_afns.get(i) for i in indices]
             id_nuevo_afd = entrada_id_afd.get().strip()
-            
+
             if len(seleccionados) < 2:
                 messagebox.showerror("Error", "Debes seleccionar al menos 2 AFNs para unirlos.")
                 return
             if not id_nuevo_afd:
                 messagebox.showerror("Error", "Debes ingresar un ID para guardar el analizador.")
                 return
-                
+
             try:
                 for i, id_sel in enumerate(seleccionados):
                     AFN.obtener_afn(id_sel).asignar_token((i + 1) * 10)
-                    
+
                 id_afn_combinado = f"AFN_{id_nuevo_afd}"
-                if id_afn_combinado in AFN.afns_creados:
-                    del AFN.afns_creados[id_afn_combinado]
-                    
+                if id_afn_combinado in AFNS_CREADOS:
+                    del AFNS_CREADOS[id_afn_combinado]
+
                 afn_lex = AFN.union_especial_lexica(id_afn_combinado, seleccionados)
-                
+
                 from afd import AFD
                 AFD(id_nuevo_afd).convertir_afn(afn_lex)
                 messagebox.showinfo("Éxito", f"Analizador '{id_nuevo_afd}' guardado en memoria.")
@@ -1033,9 +1026,7 @@ class InterfazThompson:
         entrada_cadena = tk.Entry(ventana, width=40, font=("Arial", 12))
         entrada_cadena.pack(pady=5)
 
-        entrada_cadena.bind("<Tab>", self.insertar_tab)
 
-        # Tabla de resultados léxicos
         columnas = ("token", "lexema")
         tabla = ttk.Treeview(ventana, columns=columnas, show="headings", height=10)
         tabla.heading("token", text="Token")
@@ -1045,18 +1036,19 @@ class InterfazThompson:
         tabla.pack(pady=10)
 
         def analizar_cadena():
+
             id_afd = entrada_id_afd.get().strip()
             if not id_afd:
                 messagebox.showerror("Error", "Escribe el ID del Analizador Léxico a usar.")
                 return
-                
+
             from afd import AFD
             afd_a_usar = AFD.obtener_afd(id_afd)
-            
+
             if not afd_a_usar:
                 messagebox.showerror("Error", f"No se encontró el analizador '{id_afd}'. ¡Genéralo primero!")
                 return
-                
+
             cadena = entrada_cadena.get()
             if not cadena:
                 return
@@ -1071,14 +1063,15 @@ class InterfazThompson:
                 token = analizador.yylex()
                 if token == AnalizLexico.FIN:
                     break
-                
+
                 tabla.insert("", tk.END, values=(token, analizador.estado.lexema))
-                
+
                 if token == AnalizLexico.ERROR:
                     messagebox.showwarning("Error Léxico", f"Símbolo no reconocido: '{analizador.estado.lexema}'")
+                    break
 
-        tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5) 
-        
+        tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5)
+
     def dibujar_afn(self, canvas, afn):
 
         canvas.delete("all")
@@ -1100,12 +1093,12 @@ class InterfazThompson:
 
         posiciones = {}
 
-        # Obtenemos el nivel de cada estado
+
         niveles = self.calcular_niveles(afn)
 
         estados_por_nivel = {}
 
-        # Agrupamos los estados según su nivel
+
         for estado in estados:
 
             nivel = niveles[estado.id_edo]
@@ -1124,7 +1117,7 @@ class InterfazThompson:
 
         cantidad_niveles = max_nivel + 1
 
-        # Espacio horizontal entre niveles
+
         if cantidad_niveles == 1:
             espacio_x = 1
         else:
@@ -1132,7 +1125,7 @@ class InterfazThompson:
                 ancho - 2 * margen_x
             ) / (cantidad_niveles - 1)
 
-        # Calculamos la posición de los estados
+
         for nivel in sorted(estados_por_nivel.keys()):
 
             lista_estados = sorted(
@@ -1142,7 +1135,7 @@ class InterfazThompson:
 
             cantidad_estados = len(lista_estados)
 
-            # Si solo hay uno, lo ponemos al centro
+
             if cantidad_estados == 1:
 
                 y_positions = [
@@ -1175,6 +1168,7 @@ class InterfazThompson:
 
         transiciones = afn.obtener_transiciones()
 
+
         pares = {
             (origen, destino)
             for origen, simbolo, destino in transiciones
@@ -1192,6 +1186,7 @@ class InterfazThompson:
 
             nivel_origen = niveles[origen]
             nivel_destino = niveles[destino]
+
 
 
             if origen == destino:
@@ -1222,6 +1217,8 @@ class InterfazThompson:
                 )
 
                 continue
+
+
 
             if (
                 origen == afn.edo_ini.id_edo
@@ -1272,6 +1269,8 @@ class InterfazThompson:
                 )
 
                 continue
+
+
 
             if nivel_destino < nivel_origen:
 
@@ -1332,7 +1331,7 @@ class InterfazThompson:
 
                 continue
 
-            # Transiciones hacia adelante
+
 
             dx = x2 - x1
             dy = y2 - y1
@@ -1346,6 +1345,8 @@ class InterfazThompson:
 
             ux = dx / distancia
             uy = dy / distancia
+
+
 
             inicio_x = (
                 x1 + ux * radio_estado
@@ -1362,6 +1363,7 @@ class InterfazThompson:
             fin_y = (
                 y2 - uy * radio_estado
             )
+
 
 
             if (destino, origen) in pares:
@@ -1409,7 +1411,7 @@ class InterfazThompson:
 
             else:
 
-                # Flecha normal
+
                 canvas.create_line(
                     inicio_x,
                     inicio_y,
@@ -1435,13 +1437,14 @@ class InterfazThompson:
                 )
 
 
+
         for estado in estados:
 
             x, y = posiciones[
                 estado.id_edo
             ]
 
-            # Círculo principal
+
             canvas.create_oval(
                 x - radio_estado,
                 y - radio_estado,
@@ -1452,8 +1455,8 @@ class InterfazThompson:
                 width=2
             )
 
-            # Doble círculo si es
-            # estado de aceptación
+
+
             if estado in afn.edos_acept:
 
                 canvas.create_oval(
@@ -1466,13 +1469,14 @@ class InterfazThompson:
                     width=2
                 )
 
-            # ID del estado
+
             canvas.create_text(
                 x,
                 y,
                 text=str(estado.id_edo),
                 font=("Arial", 11, "bold")
             )
+
 
 
         inicial = afn.edo_ini
@@ -1501,6 +1505,7 @@ class InterfazThompson:
 
         transiciones = afn.obtener_transiciones()
 
+
         ordenados = {}
 
         for nivel, estados in estados_por_nivel.items():
@@ -1508,6 +1513,7 @@ class InterfazThompson:
                 estados,
                 key=lambda e: e.id_edo
             )
+
 
         for nivel in sorted(ordenados.keys()):
 
@@ -1518,6 +1524,7 @@ class InterfazThompson:
 
             if nivel_anterior not in ordenados:
                 continue
+
 
             posiciones_anteriores = {
                 estado.id_edo: i
@@ -1535,6 +1542,8 @@ class InterfazThompson:
                     if destino != estado.id_edo:
                         continue
 
+
+
                     if (
                         origen in niveles
                         and niveles[origen] == nivel_anterior
@@ -1543,8 +1552,12 @@ class InterfazThompson:
                         padres.append(
                             posiciones_anteriores[origen]
                         )
+
+
+
                 if not padres:
                     return float("inf")
+
 
                 return sum(padres) / len(padres)
 
