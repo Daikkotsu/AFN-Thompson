@@ -97,6 +97,10 @@ class InterfazThompson:
 
         boton_modulo_lexico.pack(pady=15)
 
+    def insertar_tab(self, event):
+        event.widget.insert(tk.INSERT, "\t")
+        return "break"  # Evita que Tkinter cambie el foco a la siguiente caja
+
     def ventana_crear_basico(self):
 
         ventana = tk.Toplevel(self.ventana)
@@ -135,6 +139,10 @@ class InterfazThompson:
 
         entrada_id = tk.Entry(ventana)
         entrada_id.pack(pady=5)
+
+        # Se lo aplicamos a las dos cajas de símbolos
+        entrada_simb1.bind("<Tab>", self.insertar_tab)
+        entrada_simb2.bind("<Tab>", self.insertar_tab)
 
         def crear():
 
@@ -952,8 +960,7 @@ class InterfazThompson:
                     )
                 )
 
-            # Con este selector se cambia 
-            # automaticamente al cambiar de AFN
+            # Con este selector se cambia automaticamente al cambiar de AFN
 
         selector_afn.bind(
             "<<ComboboxSelected>>",
@@ -1025,6 +1032,8 @@ class InterfazThompson:
         tk.Label(ventana, text="2. Escribe la cadena a analizar:", font=("Arial", 11, "bold")).pack(pady=10)
         entrada_cadena = tk.Entry(ventana, width=40, font=("Arial", 12))
         entrada_cadena.pack(pady=5)
+
+        entrada_cadena.bind("<Tab>", self.insertar_tab)
 
         # Tabla de resultados léxicos
         columnas = ("token", "lexema")
@@ -1345,8 +1354,7 @@ class InterfazThompson:
             ux = dx / distancia
             uy = dy / distancia
 
-            # Evitamos que la flecha entre
-            # hasta el centro del círculo
+            # Evitamos que la flecha entre hasta el centro del círculo
             inicio_x = (
                 x1 + ux * radio_estado
             )
@@ -1541,8 +1549,7 @@ class InterfazThompson:
                     if destino != estado.id_edo:
                         continue
 
-                    # Solo nos interesan conexiones
-                    # provenientes del nivel anterior
+                    # Solo nos interesan conexiones provenientes del nivel anterior
                     if (
                         origen in niveles
                         and niveles[origen] == nivel_anterior
@@ -1552,8 +1559,7 @@ class InterfazThompson:
                             posiciones_anteriores[origen]
                         )
 
-                # Si nadie del nivel anterior llega aquí,
-                # lo dejamos al final
+                # Si nadie del nivel anterior llega aquí, lo dejamos al final
                 if not padres:
                     return float("inf")
 

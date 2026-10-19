@@ -16,8 +16,6 @@ class Transicion:
     def __init__(self, simb_inf, edo_dest, simb_sup=None):
         self.simb_inf = simb_inf
 
-        # Si solo manda un simbolo
-        # Entonces el limite superior sera el mismo 
         if simb_sup is None:
             self.simb_sup = simb_inf
         else:
