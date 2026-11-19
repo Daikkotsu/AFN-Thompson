@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import math
+from gramatica import Gramatica
+from ll1 import AnalizadorLL1
+from lr0 import AnalizadorLR0
 
 from afn import AFN, AFNS_CREADOS
 
@@ -96,6 +99,30 @@ class InterfazThompson:
         )
 
         boton_modulo_lexico.pack(pady=15)
+
+        tk.Button(
+            self.ventana,
+            text="Descenso Recursivo (ER -> AFN)", 
+            width=30, 
+            command=self.ventana_er_afn, 
+            bg="lightblue"
+            ).pack(pady=5)
+
+        tk.Button(
+            self.ventana, 
+            text="Analizador LL(1)", 
+            width=30, 
+            command=self.ventana_ll1, 
+            bg="lightblue"
+            ).pack(pady=5)
+        
+        tk.Button(
+            self.ventana, 
+            text="Analizador LR(0)",
+            width=30, 
+            command=self.ventana_lr0, 
+            bg="lightblue"
+            ).pack(pady=5)
 
     def insertar_tab(self, event):
         event.widget.insert(tk.INSERT, "\t")
@@ -959,9 +986,6 @@ class InterfazThompson:
                     )
                 )
 
-
-
-
         selector_afn.bind(
             "<<ComboboxSelected>>",
             mostrar_afn
@@ -1076,9 +1100,252 @@ class InterfazThompson:
 
                 if token == AnalizLexico.ERROR:
                     messagebox.showwarning("Error Léxico", f"Símbolo no reconocido: '{analizador.estado.lexema}'")
-                    
+                    ventana.destroy()
 
         tk.Button(ventana, text="Analizar Cadena", command=analizar_cadena, bg="lightgreen", width=20).pack(pady=5)
+
+    def ventana_er_afn(self):
+        ventana = tk.Toplevel(self.ventana)
+        ventana.title("Descenso Recursivo: ER -> AFN")
+        ventana.geometry("420x250")
+
+        tk.Label(ventana, text="Expresión Regular (Ej: (a|b)*c+):", font=("Arial", 10, "bold")).pack(pady=10)
+        entrada_er = tk.Entry(ventana, width=32, font=("Consolas", 11))
+        entrada_er.pack(pady=5)
+        entrada_er.insert(0, "(a|b)*c+")
+
+        tk.Label(ventana, text="ID para guardar el AFN resultante:").pack(pady=5)
+        entrada_id = tk.Entry(ventana, width=32, font=("Consolas", 11))
+        entrada_id.pack(pady=5)
+        entrada_id.insert(0, "AFN_ER")
+
+        def procesar_er():
+            er_cadena = entrada_er.get().strip()
+            id_afn = entrada_id.get().strip()
+            if not er_cadena or not id_afn:
+                messagebox.showerror("Error", "Llena todos los campos.")
+                return
+
+            tmp_ids = ["TMP_OR", "TMP_KLEENE", "TMP_POS", "TMP_OPC", "TMP_PI", "TMP_PD", "TMP_LETRAS", "LEX_REGEX_TMP"]
+            try:
+                from afn import AFN
+                from afd import AFD
+                from analiz_lexico import AnalizLexico
+                from er_afn import ER_AFN
+
+                # Limpiar temporales previos por si se ejecuta más de una vez
+                for tid in tmp_ids:
+                    AFN.afns_creados.pop(tid, None)
+
+                # Crear AFD léxico para leer los símbolos de la ER
+                AFN().crear_basico("|", id_afn="TMP_OR").asignar_token(10)
+                AFN().crear_basico("*", id_afn="TMP_KLEENE").asignar_token(30)
+                AFN().crear_basico("+", id_afn="TMP_POS").asignar_token(40)
+                AFN().crear_basico("?", id_afn="TMP_OPC").asignar_token(50)
+                AFN().crear_basico("(", id_afn="TMP_PI").asignar_token(60)
+                AFN().crear_basico(")", id_afn="TMP_PD").asignar_token(70)
+                AFN().crear_basico("a", "z", "TMP_LETRAS").asignar_token(80)
+
+                afn_lex = AFN.union_especial_lexica(
+                    "LEX_REGEX_TMP",
+                    ["TMP_OR", "TMP_KLEENE", "TMP_POS", "TMP_OPC", "TMP_PI", "TMP_PD", "TMP_LETRAS"]
+                )
+                afd_regex = AFD("AFD_REGEX_TMP").convertir_afn(afn_lex)
+
+                # Ejecutar descenso recursivo
+                analizador = AnalizLexico(afd_regex, er_cadena)
+                traductor = ER_AFN(analizador)
+                exito, afn_final = traductor.convertir(id_afn)
+
+                if exito:
+                    messagebox.showinfo(
+                        "Éxito",
+                        f"AFN '{id_afn}' creado con {len(afn_final.edos_afn)} estados.\nYa puedes verlo en 'Ver AFN'."
+                    )
+                    ventana.destroy()
+                else:
+                    messagebox.showerror("Error", "Error de sintaxis en la Expresión Regular.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Fallo: {str(e)}")
+            finally:
+                # Dejar limpio el diccionario para que no estorben en 'Ver AFN'
+                from afn import AFN
+                for tid in tmp_ids:
+                    AFN.afns_creados.pop(tid, None)
+
+        tk.Button(ventana, text="Convertir a AFN", command=procesar_er, bg="lightgreen").pack(pady=15)
+
+    def _crear_tabla_con_scroll(self, padre, columnas, altura=8):
+        """Helper para crear tablas limpias con scroll vertical y horizontal."""
+        frame = tk.Frame(padre)
+        frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        scroll_y = tk.Scrollbar(frame, orient="vertical")
+        scroll_x = tk.Scrollbar(frame, orient="horizontal")
+
+        tabla = ttk.Treeview(
+            frame, columns=columnas, show="headings", height=altura,
+            yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set
+        )
+        scroll_y.config(command=tabla.yview)
+        scroll_x.config(command=tabla.xview)
+
+        scroll_y.pack(side="right", fill="y")
+        scroll_x.pack(side="bottom", fill="x")
+        tabla.pack(fill="both", expand=True)
+
+        return tabla
+
+    def ventana_ll1(self):
+        ventana = tk.Toplevel(self.ventana)
+        ventana.title("Analizador Sintáctico LL(1)")
+        ventana.geometry("900x700")
+
+        tk.Label(ventana, text="Gramática (símbolos separados por espacio, usa 'ε' para epsilon):", font=("Arial", 10, "bold")).pack(pady=5)
+        txt_gram = tk.Text(ventana, height=6, width=70, font=("Consolas", 10))
+        txt_gram.pack(pady=5)
+        txt_gram.insert("1.0", "E  -> T Ep\nEp -> + T Ep | - T Ep | ε\nT  -> F Tp\nTp -> * F Tp | / F Tp | ε\nF  -> ( E ) | num")
+
+        estado_ll1 = {"analizador": None}
+
+        frame_tabla = tk.Frame(ventana)
+        frame_tabla.pack(fill="both", expand=True)
+
+        def construir():
+            for w in frame_tabla.winfo_children():
+                w.destroy()
+            try:
+                g = Gramatica(txt_gram.get("1.0", tk.END))
+                ll1 = AnalizadorLL1(g)
+                estado_ll1["analizador"] = ll1
+
+                cols = ["Símbolo"] + ll1.columnas
+                tabla = self._crear_tabla_con_scroll(frame_tabla, cols, altura=9)
+                for c in cols:
+                    tabla.heading(c, text=c)
+                    tabla.column(c, width=75, anchor="center")
+
+                for fila in ll1.filas:
+                    valores = [fila] + [ll1.tabla[fila][c] for c in ll1.columnas]
+                    tabla.insert("", tk.END, values=valores)
+
+                if ll1.conflictos:
+                    messagebox.showwarning("Conflictos LL(1)", "\n".join(ll1.conflictos))
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(ventana, text="Construir Tabla LL(1)", command=construir, bg="lightgreen").pack(pady=5)
+
+        # Sección para analizar cadena σ
+        frame_cad = tk.Frame(ventana)
+        frame_cad.pack(pady=5)
+        tk.Label(frame_cad, text="Cadena σ (tokens separados por espacio):").pack(side="left", padx=5)
+        ent_cad = tk.Entry(frame_cad, width=40, font=("Consolas", 10))
+        ent_cad.pack(side="left", padx=5)
+        ent_cad.insert(0, "num + num * ( num + num )")
+
+        lbl_res = tk.Label(ventana, text="Resultado: -", font=("Arial", 11, "bold"))
+        lbl_res.pack(pady=2)
+
+        tabla_pasos = self._crear_tabla_con_scroll(ventana, ("Pila", "Entrada", "Acción"), altura=8)
+        tabla_pasos.heading("Pila", text="Pila")
+        tabla_pasos.heading("Entrada", text="Entrada")
+        tabla_pasos.heading("Acción", text="Acción")
+        tabla_pasos.column("Pila", width=260, anchor="w")
+        tabla_pasos.column("Entrada", width=260, anchor="w")
+        tabla_pasos.column("Acción", width=300, anchor="w")
+
+        def analizar():
+            ll1 = estado_ll1["analizador"]
+            if not ll1:
+                messagebox.showerror("Error", "Primero construye la Tabla LL(1).")
+                return
+            for item in tabla_pasos.get_children():
+                tabla_pasos.delete(item)
+
+            exito, pasos = ll1.analizar_cadena(ent_cad.get())
+            for p, e, a in pasos:
+                tabla_pasos.insert("", tk.END, values=(p, e, a))
+            lbl_res.config(text="Resultado: CADENA ACEPTADA" if exito else "Resultado: CADENA RECHAZADA",
+                           fg="green" if exito else "red")
+
+        tk.Button(frame_cad, text="Analizar σ", command=analizar, bg="lightyellow").pack(side="left", padx=5)
+
+    def ventana_lr0(self):
+        ventana = tk.Toplevel(self.ventana)
+        ventana.title("Analizador Sintáctico LR(0)")
+        ventana.geometry("950x720")
+
+        tk.Label(ventana, text="Gramática (símbolos separados por espacio):", font=("Arial", 10, "bold")).pack(pady=5)
+        txt_gram = tk.Text(ventana, height=5, width=70, font=("Consolas", 10))
+        txt_gram.pack(pady=5)
+        txt_gram.insert("1.0", "E -> E + T | E - T | T\nT -> T * F | T / F | F\nF -> ( E ) | num")
+
+        estado_lr0 = {"analizador": None}
+
+        frame_tabla = tk.Frame(ventana)
+        frame_tabla.pack(fill="both", expand=True)
+
+        def construir():
+            for w in frame_tabla.winfo_children():
+                w.destroy()
+            try:
+                g = Gramatica(txt_gram.get("1.0", tk.END))
+                lr0 = AnalizadorLR0(g)
+                estado_lr0["analizador"] = lr0
+
+                cols_datos = lr0.columnas_accion + lr0.columnas_ira
+                cols = ["Estado"] + cols_datos
+                tabla = self._crear_tabla_con_scroll(frame_tabla, cols, altura=10)
+                for c in cols:
+                    tabla.heading(c, text=c)
+                    tabla.column(c, width=70, anchor="center")
+
+                for edo in range(len(lr0.estados)):
+                    valores = [f"S{edo}"] + [lr0.tabla[edo][c] for c in cols_datos]
+                    tabla.insert("", tk.END, values=valores)
+
+                if lr0.conflictos:
+                    messagebox.showwarning("Conflictos LR(0)", "\n".join(lr0.conflictos))
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(ventana, text="Construir Tabla LR(0)", command=construir, bg="lightgreen").pack(pady=5)
+
+        # Sección para analizar cadena σ
+        frame_cad = tk.Frame(ventana)
+        frame_cad.pack(pady=5)
+        tk.Label(frame_cad, text="Cadena σ (tokens separados por espacio):").pack(side="left", padx=5)
+        ent_cad = tk.Entry(frame_cad, width=40, font=("Consolas", 10))
+        ent_cad.pack(side="left", padx=5)
+        ent_cad.insert(0, "num + num * ( num + num )")
+
+        lbl_res = tk.Label(ventana, text="Resultado: -", font=("Arial", 11, "bold"))
+        lbl_res.pack(pady=2)
+
+        tabla_pasos = self._crear_tabla_con_scroll(ventana, ("Pila", "Entrada", "Acción"), altura=8)
+        tabla_pasos.heading("Pila", text="Pila")
+        tabla_pasos.heading("Entrada", text="Entrada")
+        tabla_pasos.heading("Acción", text="Acción")
+        tabla_pasos.column("Pila", width=320, anchor="w")
+        tabla_pasos.column("Entrada", width=240, anchor="w")
+        tabla_pasos.column("Acción", width=280, anchor="w")
+
+        def analizar():
+            lr0 = estado_lr0["analizador"]
+            if not lr0:
+                messagebox.showerror("Error", "Primero construye la Tabla LR(0).")
+                return
+            for item in tabla_pasos.get_children():
+                tabla_pasos.delete(item)
+
+            exito, pasos = lr0.analizar_cadena(ent_cad.get())
+            for p, e, a in pasos:
+                tabla_pasos.insert("", tk.END, values=(p, e, a))
+            lbl_res.config(text="Resultado: CADENA ACEPTADA" if exito else "Resultado: CADENA RECHAZADA",
+                           fg="green" if exito else "red")
+
+        tk.Button(frame_cad, text="Analizar σ", command=analizar, bg="lightyellow").pack(side="left", padx=5)
 
     def dibujar_afn(self, canvas, afn):
 
