@@ -14,6 +14,9 @@ class Gramatica:
         self.calcular_first()
         self.calcular_follow()
 
+        self.tokens = {t: (i + 1) * 10 for i, t in enumerate(self.terminales)}
+        self.tokens[self.FIN] = 0
+
     def _parsear(self, texto):
         lineas = [l.strip() for l in texto.strip().splitlines() if l.strip()]
 

@@ -1201,7 +1201,7 @@ class InterfazThompson:
         ventana.title("Analizador Sintáctico LL(1)")
         ventana.geometry("900x700")
 
-        tk.Label(ventana, text="Gramática (símbolos separados por espacio, usa 'ε' para epsilon):", font=("Arial", 10, "bold")).pack(pady=5)
+        tk.Label(ventana, text="Gramática (separa simbolos por espacio y usa 'ε' para epsilon):", font=("Arial", 10, "bold")).pack(pady=5)
         txt_gram = tk.Text(ventana, height=6, width=70, font=("Consolas", 10))
         txt_gram.pack(pady=5)
         txt_gram.insert("1.0", "E  -> T Ep\nEp -> + T Ep | - T Ep | ε\nT  -> F Tp\nTp -> * F Tp | / F Tp | ε\nF  -> ( E ) | num")
@@ -1216,6 +1216,8 @@ class InterfazThompson:
                 w.destroy()
             try:
                 g = Gramatica(txt_gram.get("1.0", tk.END))
+                texto_tokens = " | ".join(f"{t}: {tok}" for t, tok in g.tokens.items())
+                tk.Label(frame_tabla, text=f"Tokens asignados -> {texto_tokens}", fg="blue", font=("Consolas", 9, "bold")).pack(pady=2)
                 ll1 = AnalizadorLL1(g)
                 estado_ll1["analizador"] = ll1
 
@@ -1239,7 +1241,7 @@ class InterfazThompson:
         # Sección para analizar cadena σ
         frame_cad = tk.Frame(ventana)
         frame_cad.pack(pady=5)
-        tk.Label(frame_cad, text="Cadena σ (tokens separados por espacio):").pack(side="left", padx=5)
+        tk.Label(frame_cad, text="Cadena σ (separa los tokens con espacio):").pack(side="left", padx=5)
         ent_cad = tk.Entry(frame_cad, width=40, font=("Consolas", 10))
         ent_cad.pack(side="left", padx=5)
         ent_cad.insert(0, "num + num * ( num + num )")
@@ -1276,7 +1278,7 @@ class InterfazThompson:
         ventana.title("Analizador Sintáctico LR(0)")
         ventana.geometry("950x720")
 
-        tk.Label(ventana, text="Gramática (símbolos separados por espacio):", font=("Arial", 10, "bold")).pack(pady=5)
+        tk.Label(ventana, text="Gramática (separa símbolos con espacio):", font=("Arial", 10, "bold")).pack(pady=5)
         txt_gram = tk.Text(ventana, height=5, width=70, font=("Consolas", 10))
         txt_gram.pack(pady=5)
         txt_gram.insert("1.0", "E -> E + T | E - T | T\nT -> T * F | T / F | F\nF -> ( E ) | num")
@@ -1291,6 +1293,8 @@ class InterfazThompson:
                 w.destroy()
             try:
                 g = Gramatica(txt_gram.get("1.0", tk.END))
+                texto_tokens = " | ".join(f"{t}: {tok}" for t, tok in g.tokens.items())
+                tk.Label(frame_tabla, text=f"Tokens asignados -> {texto_tokens}", fg="blue", font=("Consolas", 9, "bold")).pack(pady=2)
                 lr0 = AnalizadorLR0(g)
                 estado_lr0["analizador"] = lr0
 
@@ -1315,7 +1319,7 @@ class InterfazThompson:
         # Sección para analizar cadena σ
         frame_cad = tk.Frame(ventana)
         frame_cad.pack(pady=5)
-        tk.Label(frame_cad, text="Cadena σ (tokens separados por espacio):").pack(side="left", padx=5)
+        tk.Label(frame_cad, text="Cadena σ (separa los tokens con espacio):").pack(side="left", padx=5)
         ent_cad = tk.Entry(frame_cad, width=40, font=("Consolas", 10))
         ent_cad.pack(side="left", padx=5)
         ent_cad.insert(0, "num + num * ( num + num )")
